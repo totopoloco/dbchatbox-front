@@ -1,8 +1,28 @@
-# Welcome to your Expo app 👋
+# WAT Simmering — Club Management Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **Work in progress** — this is an ongoing project and more features are actively being developed.
 
-## Get started
+A React Native / Expo web frontend for the WAT Simmering club management system. It digitizes the
+daily administration of the Austrian badminton club and surfaces a natural-language AI chat assistant
+as its flagship feature.
+
+---
+
+## Tech Stack
+
+| Layer | Library / Version |
+|---|---|
+| Runtime | Expo ~54.x / React Native 0.81.5 |
+| Routing | expo-router ~6.x (file-based) |
+| GraphQL | Apollo Client ^3.14.1 |
+| i18n | i18n-js ^4.5.3 + expo-localization |
+| Persistence | @react-native-async-storage/async-storage |
+| Language | TypeScript ~5.9.2 (strict) |
+| Linting | ESLint via `expo lint` |
+
+---
+
+## Getting Started
 
 1. Install dependencies
 
@@ -10,41 +30,126 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Start the dev server (web)
 
    ```bash
-   npx expo start
+   npm run web
    ```
 
-In the output, you'll find options to open the app in a
+3. Type-check
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npx tsc --noEmit
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+4. Lint
 
-## Get a fresh project
+   ```bash
+   npm run lint
+   ```
 
-When you're ready, run:
+The GraphQL backend is expected at `http://localhost:8080/graphql`. Override with the
+`EXPO_PUBLIC_GRAPHQL_URL` environment variable.
 
-```bash
-npm run reset-project
+---
+
+## Project Structure
+
+```
+app/
+  _layout.tsx          Root layout — provider tree
+  index.tsx            Public portal landing page (no auth required)
+  (auth)/
+    _layout.tsx
+    login.tsx          Role-select login screen
+  (tabs)/
+    _layout.tsx        6-tab navigator
+    chat.tsx           AI assistant chat (flagship feature)
+    dashboard.tsx
+    members.tsx
+    sessions.tsx
+    trainers.tsx
+    profile.tsx
+components/
+  ui/
+    language-switcher.tsx   Flag dropdown, all 5 locales
+constants/
+  theme.ts             Brand colour tokens + spacing scale
+lib/
+  apollo.ts            Apollo Client instance
+  auth-context.tsx     AuthProvider + useAuth hook
+  i18n/
+    index.tsx          LocaleProvider, useLocale hook, t() function
+    de.ts              German translations (source of truth)
+    en.ts / es.ts / fr.ts / it.ts
+docs/
+  FrontendSpec.md      Full phase-1 technical specification
+  tasks/               Per-task implementation specs
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## Changelog — May 5 2026
 
-To learn more about developing your project with Expo, look at the following resources:
+### TASK-FE-002 · Localisation (i18n)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Complete multi-language support across the entire app.
 
-## Join the community
+**Languages:** German (default) · English · Spanish · French · Italian
 
-Join our community of developers creating universal apps.
+**What was added**
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `lib/i18n/de.ts` — German translation catalogue (source of truth for all keys)
+- `lib/i18n/en.ts`, `es.ts`, `fr.ts`, `it.ts` — typed catalogues (`typeof de` enforces identical shape)
+- `lib/i18n/index.tsx` — `I18n` instance, `LocaleProvider`, `useLocale()` hook, standalone `t()`,
+  `TranslationKey` type (dot-path utility type for compile-time key safety)
+- `components/ui/language-switcher.tsx` — compact flag + code dropdown in the nav bar; uses a
+  transparent `<select>` overlaid on a branded pill so the layout never shifts
+- Locale is auto-detected from the device/browser and persisted in `AsyncStorage`
+- All screens translated: portal landing page, login, all 6 tab screens and their nav titles
+
+**Key technical decisions**
+
+- Translation lookup inside `LocaleProvider` reads directly from the imported dictionaries keyed by
+  the `locale` state variable — this guarantees React re-renders pick up the new locale immediately
+  without relying on the `i18n` singleton's internal state.
+- `AsyncStorage` key: `@watsimmering/lang`
+- Provider order in `app/_layout.tsx`: `ApolloProvider → LocaleProvider → AuthProvider → ThemeProvider`
+
+---
+
+## Earlier Work
+
+### TASK-FE-001 · App Shell & Chat MVP
+
+- Brand design system (`constants/theme.ts`) — WAT Simmering gold `#CCAA71`, charcoal `#242628`,
+  full light/dark token set
+- Public portal landing page (`app/index.tsx`) modelled after watsimmering.at — hero, training
+  times with venue selector, membership steps, contact, footer
+- Auth flow — `AuthContext` (role: admin / member / trainer), `(auth)` stack, branded login screen
+- 6-tab navigator with branded nav bar
+- AI chat screen — `useLazyQuery` against `query Ask($input: AskInput!)`, typing indicator,
+  example prompts, tool-call detail cards
+- Apollo Client v3 configured against `EXPO_PUBLIC_GRAPHQL_URL`
+
+---
+
+## Roadmap (upcoming)
+
+- JWT-based authentication (Phase 2)
+- Members screen — list, search, profile detail
+- Sessions screen — calendar view, booking
+- Trainers screen — hours & earnings
+- Dashboard — admin analytics
+- Native language picker (ActionSheet) for iOS / Android
+- Offline support & connectivity handling
+- Accessibility audit
+
+---
+
+## Learn More
+
+- [Expo documentation](https://docs.expo.dev/)
+- [Apollo Client docs](https://www.apollographql.com/docs/react/)
+- [i18n-js docs](https://github.com/fnando/i18n)
+- [Frontend Spec](docs/FrontendSpec.md)
