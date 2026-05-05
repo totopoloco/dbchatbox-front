@@ -1,0 +1,11 @@
+query Ask($input: AskInput!) {
+  ask(input: $input) {
+    answer
+    toolCalls {
+      name
+      arguments
+      durationMillis
+      error
+    }
+  }
+}

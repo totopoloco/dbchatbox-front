@@ -1,29 +1,73 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
+export const BrandColors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    primary: '#CCAA71',
+    primaryPressed: '#B8925A',
+    onPrimary: '#F8FAFC',
+    navBar: '#242628',
+    navBarText: '#F4F5F5',
+    navBarTextActive: '#CCAA71',
+    background: '#FFFFFF',
+    surface: '#FFFFFF',
+    surfaceVariant: '#F1F5F9',
+    onSurface: '#0C0D0D',
+    onSurfaceVariant: '#64748B',
+    outline: '#E2E8F0',
+    error: '#EF4444',
+    onError: '#F8FAFC',
+    warning: '#D97706',
+    success: '#15803D',
+    statusActive: '#15803D',
+    statusInactive: '#64748B',
+    statusDeleted: '#EF4444',
+    paymentPaid: '#15803D',
+    paymentOverdue: '#EF4444',
+    paymentInReview: '#D97706',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    primary: '#CCAA71',
+    primaryPressed: '#B8925A',
+    onPrimary: '#F8FAFC',
+    navBar: '#242628',
+    navBarText: '#F4F5F5',
+    navBarTextActive: '#CCAA71',
+    background: '#1A1C1D',
+    surface: '#242628',
+    surfaceVariant: '#2E3032',
+    onSurface: '#F4F5F5',
+    onSurfaceVariant: '#94A3B8',
+    outline: '#3A3C3E',
+    error: '#FCA5A5',
+    onError: '#450A0A',
+    warning: '#FCD34D',
+    success: '#86EFAC',
+    statusActive: '#86EFAC',
+    statusInactive: '#94A3B8',
+    statusDeleted: '#FCA5A5',
+    paymentPaid: '#86EFAC',
+    paymentOverdue: '#FCA5A5',
+    paymentInReview: '#FCD34D',
+  },
+};
+
+// Legacy Colors export kept for backward-compat with useThemeColor
+export const Colors = {
+  light: {
+    text: BrandColors.light.onSurface,
+    background: BrandColors.light.background,
+    tint: BrandColors.light.primary,
+    icon: BrandColors.light.onSurfaceVariant,
+    tabIconDefault: BrandColors.light.navBarText,
+    tabIconSelected: BrandColors.light.navBarTextActive,
+  },
+  dark: {
+    text: BrandColors.dark.onSurface,
+    background: BrandColors.dark.background,
+    tint: BrandColors.dark.primary,
+    icon: BrandColors.dark.onSurfaceVariant,
+    tabIconDefault: BrandColors.dark.navBarText,
+    tabIconSelected: BrandColors.dark.navBarTextActive,
   },
 };
 
@@ -51,3 +95,12 @@ export const Fonts = Platform.select({
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });
+
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+};
