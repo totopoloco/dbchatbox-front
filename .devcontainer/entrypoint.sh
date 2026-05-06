@@ -14,7 +14,7 @@ chown -R $USER:$USER /workspace/node_modules || true
 chmod 775 /workspace/node_modules || true
 
 echo "Installing global dev tools"
-npm install -g @nestjs/cli prettier jest mocha eslint rimraf @anthropic-ai/claude-code
+npm install -g @nestjs/cli prettier jest mocha eslint rimraf @anthropic-ai/claude-code expo-cli
 
 echo "Installing project dependencies via npm"
 npm install
