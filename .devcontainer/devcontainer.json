@@ -19,8 +19,6 @@
       },
       "extensions": [
         "dbaeumer.vscode-eslint",
-        "mongodb.mongodb-vscode",
-        "VisualStudioExptTeam.vscodeintellicode",
         "DavidAnson.vscode-markdownlint",
         "k--kato.intellij-idea-keybindings",
         "christian-kohler.npm-intellisense",
@@ -28,7 +26,6 @@
         "anthropic.claude-code",
         "github.copilot",
         "github.copilot-chat",
-        "ms-azuretools.vscode-docker",
         "usernamehw.errorlens",
         "MS-vsliveshare.vsliveshare",
         "dbaeumer.vscode-eslint",

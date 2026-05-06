@@ -1,0 +1,16 @@
+# .github/dependabot.yml
+
+version: 2
+updates:
+
+  # Check npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+  # Check GitHub Actions versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

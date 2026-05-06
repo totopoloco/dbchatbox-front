@@ -6,7 +6,8 @@
       "request": "launch",
       "name": "Debug App (Chrome)",
       "webRoot": "${workspaceFolder}",
-      "preLaunchTask": "npm run start",
+      "url": "http://localhost:3000",
+      "preLaunchTask": "npm run web",
       "sourceMaps": true,
       "smartStep": true
     }
