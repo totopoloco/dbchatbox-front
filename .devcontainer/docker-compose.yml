@@ -1,0 +1,18 @@
+services:
+  db-chatbox-frontend:
+    container_name: db-chatbox-frontend
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - db-chatbox-frontend-node_modules:/workspace/node_modules
+    cap_add:
+      - CAP_IPC_LOCK
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    ports:
+      - '3000:3000'
+      - '3001:3001'
+      - '4200:4200'
+volumes:
+  db-chatbox-frontend-node_modules:

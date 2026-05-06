@@ -1,0 +1,50 @@
+{
+  "name": "Node.js",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "db-chatbox-frontend",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "/usr/local/bin/entrypoint.sh",
+  "remoteUser": "root",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "editor.tabSize": 2,
+        "window.zoomLevel": 1,
+        "editor.fontSize": 13,
+        "terminal.integrated.fontSize": 13
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "mongodb.mongodb-vscode",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "DavidAnson.vscode-markdownlint",
+        "k--kato.intellij-idea-keybindings",
+        "christian-kohler.npm-intellisense",
+        "foxundermoon.shell-format",
+        "anthropic.claude-code",
+        "github.copilot",
+        "github.copilot-chat",
+        "ms-azuretools.vscode-docker",
+        "usernamehw.errorlens",
+        "MS-vsliveshare.vsliveshare",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "firsttris.vscode-jest-runner",
+        "sitoi.ai-commit"
+      ]
+    }
+  },
+  "forwardPorts": [
+    3000,
+    3001,
+    4200
+  ],
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=db-chatbox-frontend-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ]
+}

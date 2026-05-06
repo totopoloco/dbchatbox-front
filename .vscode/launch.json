@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug App (Chrome)",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "npm run start",
+      "sourceMaps": true,
+      "smartStep": true
+    }
+  ]
+}
