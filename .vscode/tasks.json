@@ -3,10 +3,11 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "start",
+      "script": "web",
       "problemMatcher": [],
-      "label": "npm run start",
-      "detail": "Runs the start script defined in package.json"
+      "label": "npm run web",
+      "isBackground": true,
+      "detail": "Starts the Expo web dev server"
     }
   ]
 }
