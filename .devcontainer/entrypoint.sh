@@ -10,7 +10,7 @@ if [ ! -d /workspace/node_modules ]; then
   echo "Creating node_modules directory"
   mkdir -p /workspace/node_modules
 fi
-chown -R $USER:$USER /workspace/node_modules || true
+chown -R node:node /workspace/node_modules || true
 chmod 775 /workspace/node_modules || true
 
 echo "Installing global dev tools"
@@ -23,7 +23,7 @@ echo "Dependencies installed"
 echo "Checking if we need to approve builds"
 if [ -f /usr/local/bin/approve-builds.exp ]; then
   mv /usr/local/bin/approve-builds.exp /workspace
-  chown $USER:$USER /workspace/approve-builds.exp || true
+  chown node:node /workspace/approve-builds.exp || true
   if command -v expect >/dev/null 2>&1; then
     expect ./approve-builds.exp || true
   else

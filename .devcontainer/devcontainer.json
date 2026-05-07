@@ -6,8 +6,8 @@
   "service": "db-chatbox-frontend",
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
-  "postCreateCommand": "/usr/local/bin/entrypoint.sh",
-  "remoteUser": "root",
+  "postCreateCommand": "sudo /usr/local/bin/entrypoint.sh",
+  "remoteUser": "node",
   "customizations": {
     "vscode": {
       "settings": {
