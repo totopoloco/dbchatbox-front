@@ -18,8 +18,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libcups2t64 libasound2t64
 
 COPY .devcontainer/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY .devcontainer/chrome-sandbox-watchd.sh /usr/local/sbin/chrome-sandbox-watchd
 RUN dos2unix /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh
+RUN chmod 0755 /usr/local/sbin/chrome-sandbox-watchd
 
 EXPOSE 3000
 EXPOSE 3001

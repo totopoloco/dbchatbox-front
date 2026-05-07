@@ -33,18 +33,9 @@ find /home/node/.cache/dotslash -name "chrome-sandbox" 2>/dev/null | while read 
   chmod 4755 "$sandbox"
 done
 
-# Start a background daemon that watches for newly extracted chrome-sandbox binaries
-# and immediately applies root:root + 4755. This covers VS Code debugger launches,
-# npm run web, and any other Expo/Electron trigger.
-echo "Starting chrome-sandbox watcher daemon"
-mkdir -p /home/node/.cache/dotslash
-(
-  while true; do
-    inotifywait -r -e create,moved_to /home/node/.cache/dotslash 2>/dev/null \
-      | grep -q "chrome-sandbox" && \
-      find /home/node/.cache/dotslash -name "chrome-sandbox" | while read -r f; do
-        chown root:root "$f" 2>/dev/null && chmod 4755 "$f" 2>/dev/null
-      done
-  done
-) &
-echo "Sandbox watcher started (PID $!)."
+# Start system-level chrome-sandbox watcher daemon (runs as root).
+# Watches /tmp and /home for any dotslash extraction of chrome-sandbox
+# and enforces root:root + 4755 regardless of path or trigger.
+echo "Starting chrome-sandbox-watchd"
+/usr/local/sbin/chrome-sandbox-watchd &
+echo "chrome-sandbox-watchd started (PID $!)."
