@@ -20,17 +20,6 @@ echo "Installing project dependencies via npm"
 npm install
 echo "Dependencies installed"
 
-echo "Checking if we need to approve builds"
-if [ -f /usr/local/bin/approve-builds.exp ]; then
-  mv /usr/local/bin/approve-builds.exp /workspace
-  chown node:node /workspace/approve-builds.exp || true
-  if command -v expect >/dev/null 2>&1; then
-    expect ./approve-builds.exp || true
-  else
-    echo "expect not installed; skipping approve script"
-  fi
-fi
-echo "Build approval step complete"
 
 # Fix ownership of all workspace files for the node user
 echo "Fixing workspace ownership"
