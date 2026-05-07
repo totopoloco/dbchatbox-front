@@ -31,3 +31,15 @@ if [ -f /usr/local/bin/approve-builds.exp ]; then
   fi
 fi
 echo "Build approval step complete"
+
+# Fix chrome-sandbox SUID bit for React Native DevTools (Electron requires root-owned sandbox)
+echo "Fixing chrome-sandbox SUID permissions"
+SANDBOX_DIR="/home/node/.cache/dotslash"
+find "$SANDBOX_DIR" -name "chrome-sandbox" 2>/dev/null | while read -r sandbox; do
+  chown root:root "$sandbox"
+  chmod 4755 "$sandbox"
+done
+
+# Ensure workspace files are accessible by the node user
+chown node:node /workspace/expo-env.d.ts 2>/dev/null || true
+chown -R node:node /workspace/.git 2>/dev/null || true
