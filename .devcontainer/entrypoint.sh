@@ -32,14 +32,14 @@ if [ -f /usr/local/bin/approve-builds.exp ]; then
 fi
 echo "Build approval step complete"
 
+# Fix ownership of all workspace files for the node user
+echo "Fixing workspace ownership"
+chown -R node:node /workspace
+
 # Fix chrome-sandbox SUID bit for React Native DevTools (Electron requires root-owned sandbox)
+# This must run AFTER the chown above since npm install may have downloaded it during postCreate
 echo "Fixing chrome-sandbox SUID permissions"
-SANDBOX_DIR="/home/node/.cache/dotslash"
-find "$SANDBOX_DIR" -name "chrome-sandbox" 2>/dev/null | while read -r sandbox; do
+find /home/node/.cache/dotslash -name "chrome-sandbox" 2>/dev/null | while read -r sandbox; do
   chown root:root "$sandbox"
   chmod 4755 "$sandbox"
 done
-
-# Ensure workspace files are accessible by the node user
-chown node:node /workspace/expo-env.d.ts 2>/dev/null || true
-chown -R node:node /workspace/.git 2>/dev/null || true
