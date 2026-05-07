@@ -13,7 +13,7 @@ RUN npm install -g pnpm
 # [Optional] Install additional OS packages.
 # Build tools & native dependencies (needed by some npm packages)
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends jq rsync net-tools lsof vim expect htop dos2unix iputils-ping pandoc curl \
+    && apt-get -y install --no-install-recommends jq rsync net-tools lsof vim expect htop dos2unix iputils-ping pandoc curl inotify-tools \
     # Shared libraries for @react-native/debugger-shell (Chromium-based devtools) \
     libnspr4 libnss3 libdbus-1-3 \
     libatk1.0-0t64 libatk-bridge2.0-0t64 libgtk-3-0t64 \
