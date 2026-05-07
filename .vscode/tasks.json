@@ -4,10 +4,26 @@
     {
       "type": "npm",
       "script": "web",
-      "problemMatcher": [],
       "label": "npm run web",
       "isBackground": true,
-      "detail": "Starts the Expo web dev server"
+      "detail": "Starts the Expo web dev server",
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": "^(\\S+):(\\d+):\\s+(.*)$",
+              "file": 1,
+              "line": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Starting|Bundling",
+            "endsPattern": "Metro waiting on|Bundled|compiled successfully"
+          }
+        }
+      ]
     }
   ]
 }
