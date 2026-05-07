@@ -13,7 +13,7 @@ RUN npm install -g pnpm
 # [Optional] Install additional OS packages.
 # Build tools & native dependencies (needed by some npm packages)
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends jq rsync net-tools lsof vim expect htop dos2unix iputils-ping pandoc curl libnspr4 libnss3
+    && apt-get -y install --no-install-recommends jq rsync net-tools lsof vim expect htop dos2unix iputils-ping pandoc curl libnspr4 libnss3 libdbus-1-3
 
 COPY .devcontainer/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY .devcontainer/approve-builds.exp /usr/local/bin/approve-builds.exp
