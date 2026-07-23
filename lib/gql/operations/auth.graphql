@@ -1,0 +1,18 @@
+mutation Login($input: LoginInput!) {
+  login(input: $input) {
+    accessToken
+    refreshToken
+    expiresIn
+    tokenType
+  }
+}
+
+query Me {
+  me {
+    id
+    username
+    email
+    memberId
+    trainerId
+  }
+}

@@ -1,12 +1,27 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 import { BrandColors } from '@/constants/theme';
+import { useAuth } from '@/lib/auth-context';
 import { useLocale } from '@/lib/i18n';
 
 export default function TabLayout() {
   const { t } = useLocale();
+  const { session, isReady } = useAuth();
+
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: BrandColors.light.background }}>
+        <ActivityIndicator color={BrandColors.light.primary} />
+      </View>
+    );
+  }
+
+  if (!session) {
+    return <Redirect href="/(auth)/login" />;
+  }
 
   return (
     <Tabs

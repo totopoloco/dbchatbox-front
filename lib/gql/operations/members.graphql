@@ -1,0 +1,38 @@
+query Members($status: String) {
+  members(status: $status) {
+    id
+    firstName
+    lastName
+    email
+    phoneNumber
+    currentStatus
+    memberSince
+    memberUntil
+    createdAt
+    subscriptions(active: false) {
+      id
+      agreedPrice
+      paymentStatus
+      active
+      startDate
+      endDate
+      createdAt
+    }
+  }
+}
+
+# Fallback used when the nested `subscriptions` resolver errors out server-side
+# (see FrontendSpec.md — Authentication & Session notes / known backend issue).
+query MembersBasic($status: String) {
+  members(status: $status) {
+    id
+    firstName
+    lastName
+    email
+    phoneNumber
+    currentStatus
+    memberSince
+    memberUntil
+    createdAt
+  }
+}

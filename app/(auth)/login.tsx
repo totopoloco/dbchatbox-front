@@ -1,10 +1,11 @@
+import { gql, useMutation } from '@apollo/client';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -14,15 +15,54 @@ import {
 } from 'react-native';
 
 import { BrandColors, Spacing } from '@/constants/theme';
-import { type Role, useAuth } from '@/lib/auth-context';
+import { DEMO_TENANT_SLUG } from '@/constants/tenant';
+import { client } from '@/lib/apollo';
+import { getAccessToken, setAccessToken, useAuth } from '@/lib/auth-context';
 import { useLocale } from '@/lib/i18n';
+import { decodeAccessToken, extractRole } from '@/lib/jwt';
 
-// ─── types ─────────────────────────────────────────────────────────────────────
+// ─── GraphQL ───────────────────────────────────────────────────────────────────
 
-interface RoleOption {
-  role: Role;
-  label: string;
-  desc: string;
+const LOGIN_MUTATION = gql`
+  mutation Login($input: LoginInput!) {
+    login(input: $input) {
+      accessToken
+      refreshToken
+      expiresIn
+      tokenType
+    }
+  }
+`;
+
+const ME_QUERY = gql`
+  query Me {
+    me {
+      id
+      username
+      email
+      memberId
+      trainerId
+    }
+  }
+`;
+
+interface LoginData {
+  login: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    tokenType: string;
+  };
+}
+
+interface MeData {
+  me: {
+    id: string;
+    username: string;
+    email: string | null;
+    memberId: string | null;
+    trainerId: string | null;
+  };
 }
 
 // ─── component ─────────────────────────────────────────────────────────────────
@@ -31,27 +71,60 @@ export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
   const { t } = useLocale();
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [memberId, setMemberId] = useState('');
-  const [trainerId, setTrainerId] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [login, { loading }] = useMutation<LoginData>(LOGIN_MUTATION);
 
-  const ROLES: RoleOption[] = [
-    { role: 'admin', label: t('login.roleAdmin'), desc: t('login.roleAdminDesc') },
-    { role: 'member', label: t('login.roleMember'), desc: t('login.roleMemberDesc') },
-    { role: 'trainer', label: t('login.roleTrainer'), desc: t('login.roleTrainerDesc') },
-  ];
+  const canSubmit = username.trim().length > 0 && password.length > 0 && !loading;
 
-  const handleSignIn = () => {
-    if (!selectedRole) return;
-    signIn(
-      selectedRole,
-      selectedRole === 'member' ? memberId.trim() || undefined : undefined,
-      selectedRole === 'trainer' ? trainerId.trim() || undefined : undefined,
-    );
-    router.replace('/(tabs)/chat');
+  const handleSignIn = async () => {
+    if (!canSubmit) return;
+    setErrorMessage(null);
+
+    try {
+      const { data } = await login({
+        variables: {
+          input: { tenantSlug: DEMO_TENANT_SLUG, username: username.trim(), password },
+        },
+      });
+      const result = data?.login;
+      if (!result) throw new Error('Empty login response');
+
+      // Attach the token immediately so the follow-up `me` request is authenticated.
+      setAccessToken(result.accessToken);
+
+      const claims = decodeAccessToken(result.accessToken);
+      const role = claims ? extractRole(claims) : null;
+      if (!role) throw new Error('Account has no recognized portal role');
+
+      let me: MeData['me'] | null = null;
+      try {
+        const meResult = await client.query<MeData>({ query: ME_QUERY, fetchPolicy: 'network-only' });
+        me = meResult.data?.me ?? null;
+      } catch {
+        // Non-fatal — fall back to what we already know from the token/form.
+      }
+
+      await signIn({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        tokenType: result.tokenType,
+        expiresAt: Date.now() + result.expiresIn * 1000,
+        tenantSlug: DEMO_TENANT_SLUG,
+        role,
+        username: me?.username ?? username.trim(),
+        email: me?.email ?? null,
+        memberId: me?.memberId ?? null,
+        trainerId: me?.trainerId ?? null,
+      });
+
+      router.replace('/(tabs)/chat');
+    } catch {
+      if (getAccessToken()) setAccessToken(null);
+      setErrorMessage(t('login.errorGeneric'));
+    }
   };
-
-  const selectedDesc = ROLES.find(r => r.role === selectedRole)?.desc;
 
   return (
     <KeyboardAvoidingView
@@ -75,65 +148,67 @@ export default function LoginScreen() {
           <Text style={s.cardTitle}>{t('login.title')}</Text>
           <Text style={s.cardSubtitle}>{t('login.subtitle')}</Text>
 
-          <Text style={s.fieldLabel}>{t('login.roleLabel')}</Text>
-          <View style={s.roleRow}>
-            {ROLES.map(r => (
-              <Pressable
-                key={r.role}
-                style={({ pressed }) => [
-                  s.roleBtn,
-                  selectedRole === r.role && s.roleBtnActive,
-                  pressed && s.roleBtnPressed,
-                ]}
-                onPress={() => setSelectedRole(r.role)}>
-                <Text style={[s.roleBtnText, selectedRole === r.role && s.roleBtnTextActive]}>
-                  {r.label}
-                </Text>
-              </Pressable>
-            ))}
+          <View style={s.tenantBadge}>
+            <MaterialIcons name="apartment" size={14} color={BrandColors.light.primary} />
+            <Text style={s.tenantBadgeText}>{t('login.tenantNote')}</Text>
           </View>
 
-          {selectedDesc !== undefined && <Text style={s.roleDesc}>{selectedDesc}</Text>}
+          <View style={s.inputGroup}>
+            <Text style={s.fieldLabel}>{t('login.usernameLabel')}</Text>
+            <TextInput
+              style={s.input}
+              placeholder={t('login.usernamePlaceholder')}
+              placeholderTextColor={BrandColors.light.onSurfaceVariant}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="username"
+              editable={!loading}
+              accessibilityLabel={t('login.usernameLabel')}
+            />
+          </View>
 
-          {selectedRole === 'member' && (
-            <View style={s.inputGroup}>
-              <Text style={s.fieldLabel}>{t('login.memberIdLabel')}</Text>
-              <TextInput
-                style={s.input}
-                placeholder={t('login.memberIdPlaceholder')}
-                placeholderTextColor={BrandColors.light.onSurfaceVariant}
-                value={memberId}
-                onChangeText={setMemberId}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-          )}
+          <View style={s.inputGroup}>
+            <Text style={s.fieldLabel}>{t('login.passwordLabel')}</Text>
+            <TextInput
+              style={s.input}
+              placeholder={t('login.passwordPlaceholder')}
+              placeholderTextColor={BrandColors.light.onSurfaceVariant}
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="password"
+              secureTextEntry
+              editable={!loading}
+              accessibilityLabel={t('login.passwordLabel')}
+              onSubmitEditing={handleSignIn}
+            />
+          </View>
 
-          {selectedRole === 'trainer' && (
-            <View style={s.inputGroup}>
-              <Text style={s.fieldLabel}>{t('login.trainerIdLabel')}</Text>
-              <TextInput
-                style={s.input}
-                placeholder={t('login.trainerIdPlaceholder')}
-                placeholderTextColor={BrandColors.light.onSurfaceVariant}
-                value={trainerId}
-                onChangeText={setTrainerId}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+          {errorMessage !== null && (
+            <View style={s.errorBanner}>
+              <MaterialIcons name="error-outline" size={16} color={BrandColors.light.error} />
+              <Text style={s.errorText}>{errorMessage}</Text>
             </View>
           )}
 
           <TouchableOpacity
-            style={[s.submitBtn, !selectedRole && s.submitBtnDisabled]}
+            style={[s.submitBtn, !canSubmit && s.submitBtnDisabled]}
             onPress={handleSignIn}
-            disabled={!selectedRole}
-            activeOpacity={0.85}>
-            <Text style={s.submitBtnText}>{t('login.submit')}</Text>
+            disabled={!canSubmit}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={loading ? t('login.submitting') : t('login.submit')}>
+            {loading ? (
+              <ActivityIndicator color={BrandColors.light.navBar} />
+            ) : (
+              <Text style={s.submitBtnText}>{t('login.submit')}</Text>
+            )}
           </TouchableOpacity>
 
-          <Text style={s.phaseNote}>{t('login.phaseNote')}</Text>
+          <Text style={s.demoNote}>{t('login.demoNote')}</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -185,8 +260,24 @@ const s = StyleSheet.create({
   cardSubtitle: {
     fontSize: 14,
     color: BrandColors.light.onSurfaceVariant,
-    marginBottom: 28,
+    marginBottom: 20,
     lineHeight: 20,
+  },
+  tenantBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    backgroundColor: BrandColors.light.surfaceVariant,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 24,
+  },
+  tenantBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: BrandColors.light.onSurfaceVariant,
   },
   fieldLabel: {
     fontSize: 11,
@@ -196,29 +287,7 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 10,
   },
-  roleRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  roleBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: BrandColors.light.outline,
-    alignItems: 'center',
-  },
-  roleBtnActive: {
-    borderColor: BrandColors.light.primary,
-    backgroundColor: BrandColors.light.primary,
-  },
-  roleBtnPressed: { opacity: 0.8 },
-  roleBtnText: { fontSize: 13, fontWeight: '600', color: BrandColors.light.onSurfaceVariant },
-  roleBtnTextActive: { color: BrandColors.light.navBar },
-  roleDesc: {
-    fontSize: 12,
-    color: BrandColors.light.onSurfaceVariant,
-    marginBottom: 24,
-    marginTop: 4,
-  },
-  inputGroup: { marginBottom: 24, marginTop: 8 },
+  inputGroup: { marginBottom: 20 },
   input: {
     borderWidth: 1.5,
     borderColor: BrandColors.light.outline,
@@ -229,12 +298,24 @@ const s = StyleSheet.create({
     color: BrandColors.light.onSurface,
     backgroundColor: '#fff',
   },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 20,
+  },
+  errorText: { flex: 1, fontSize: 13, color: BrandColors.light.error, lineHeight: 18 },
   submitBtn: {
     backgroundColor: BrandColors.light.primary,
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    minHeight: 52,
     marginBottom: 20,
   },
   submitBtnDisabled: { opacity: 0.4 },
@@ -244,7 +325,7 @@ const s = StyleSheet.create({
     color: BrandColors.light.navBar,
     letterSpacing: 0.3,
   },
-  phaseNote: {
+  demoNote: {
     fontSize: 11,
     color: BrandColors.light.onSurfaceVariant,
     textAlign: 'center',

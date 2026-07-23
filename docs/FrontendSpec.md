@@ -315,9 +315,10 @@ appropriate for that role:
 | Trainers      | ✅    | ❌     | ❌      |
 | Profile       | ✅    | ✅     | ✅      |
 
-> **Phase 1 note**: Authentication is stubbed. The login screen (`(auth)/login.tsx`) presents a
-> role selector; the chosen role is stored in `AuthContext`. A `memberId` or `trainerId` can be
-> typed in manually. Real JWT authentication is deferred to Phase 2.
+> **Note**: Authentication is real. The login screen (`(auth)/login.tsx`) collects username +
+> password, calls the `login` mutation against a tenant locked to `wat-simmering` for this demo,
+> and derives `role` from the `realm_access.roles` claim on the returned access token (Keycloak).
+> `memberId` / `trainerId` come from the authenticated `me` query, not manual entry.
 
 ### Stack Screens
 
@@ -328,14 +329,16 @@ using `expo-router`'s `<Link>` with `push`. The back button always returns to th
 
 ## Authentication & Session
 
-| Concern                | Phase 1 approach                                                          |
+| Concern                | Current approach                                                          |
 | ---------------------- | ------------------------------------------------------------------------- |
-| Identity               | Manual role + ID selector on the login screen (no JWT)                    |
-| Session persistence    | `AuthContext` in-memory only; resets on refresh                           |
-| Route protection       | `useProtectedRoute` hook in root layout redirects to `(auth)/login` if   |
-|                        | `AuthContext` is empty                                                    |
-| GraphQL auth header    | None in Phase 1; all GraphQL operations are unauthenticated               |
-| Future                 | Replace stub with JWT bearer token; store in `expo-secure-store`         |
+| Identity               | `login(input: LoginInput!)` mutation — `tenantSlug` locked to `wat-simmering` for this demo, `username` + `password` from the form. Returns a Keycloak-issued `accessToken` / `refreshToken`. |
+| Role                   | Decoded client-side from the access token's `realm_access.roles` claim (`lib/jwt.ts`); mapped to `admin` / `member` / `trainer`. |
+| Member/Trainer identity| Fetched via the authenticated `me` query (`CurrentUser.memberId` / `trainerId`) right after login. |
+| Session persistence    | `AuthContext` persists the full session to `AsyncStorage`; rehydrated on app boot and dropped if `expiresAt` has passed. |
+| Route protection       | `(tabs)/_layout.tsx` redirects to `(auth)/login` when there is no session once `AuthContext` has finished hydrating. |
+| GraphQL auth header    | An Apollo `setContext` link (`lib/apollo.ts`) attaches `Authorization: Bearer <accessToken>` to every request once signed in. |
+| Sign out               | Clears the Apollo cache (`client.clearStore()`) and the persisted session. |
+| Future                 | Automatic refresh via the `refreshToken` mutation before `expiresAt`; a real tenant picker instead of the locked demo slug. |
 
 ---
 

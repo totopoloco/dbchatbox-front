@@ -90,11 +90,11 @@ const W = 1100;
 
 export default function PortalHome() {
   const router = useRouter();
-  const { auth } = useAuth();
+  const { session } = useAuth();
   const { t } = useLocale();
   const [activeVenueId, setActiveVenueId] = useState<string>('leberberg');
 
-  const isAuthenticated = !!auth.role;
+  const isAuthenticated = !!session;
   const activeVenue = VENUES.find(v => v.id === activeVenueId) ?? VENUES[0];
 
   const goToPortal = () => router.replace('/(tabs)/chat');
